@@ -1,5 +1,5 @@
 import { IComponentMeta } from "../../../src/Backend/Services/MetaGenerator";
-import { IAnalyzerContext, IComponentAnalyzer } from "../../../src/Backend/compiler";
+import { IAnalyzerContext } from "../../../src/Backend/compiler";
 
 export class Error {
     constructor(public message: string, public category: "views" | "components" | "routing") {
@@ -13,5 +13,5 @@ export class AnalyzerContextStub implements IAnalyzerContext {
         this.errors.push(new Error(message, category));
     }
     errors: Error[] = [];
-    outputDirectory: string;
+    outputDirectory: string = "";
 }

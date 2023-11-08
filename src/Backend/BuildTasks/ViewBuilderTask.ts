@@ -53,12 +53,14 @@ async function mapClassToView(declaration: IComponentMeta): Promise<IViewIndexEn
 
     }
 
-    return {
+    var result: IViewIndexEntry = {
         className: declaration.className,
         tagName: declaration.tagName,
         relativeViewPath: htmlPath,
         viewFileName: declaration.fileName
     }
+    console.log('view index result', result);
+    return result;
 }
 
 var registeredMappings: IViewIndexEntry[] = [];
@@ -79,17 +81,22 @@ export class ViewBuilderTask implements IComponentAnalyzer {
     async analyze(context: IAnalyzerContext): Promise<void> {
         const registeredMappings = await this.generateIndex(context);
 
-
         for (var i = 0; i < registeredMappings.length; ++i) {
             var index = registeredMappings[i];
+
             var component = context.components.find(x => x.className == index.className);
             if (component) {
-                this.analyzeComponent(context, component, index);
+                console.log('analyzing ', component);
+                await this.analyzeComponent(context, component, index);
+            }
+            else{
+                context.addError(`Failed to match tag ${index.className} with a component.`, "components");
             }
         }
 
         const json = JSON.stringify(registeredMappings);
-        await fs.writeFile('viewIndex.json', json);
+        console.log('registered view mappings ', json);
+        await fs.writeFile(context.outputDirectory + 'viewIndex.json', json);
     }
 
     /**
@@ -117,22 +124,31 @@ export class ViewBuilderTask implements IComponentAnalyzer {
     }
 
 
+    /**
+     * 
+     * @param context Analyzes a component and its view field to be able to generate a view class.
+     * @param componentMeta 
+     * @param viewMeta 
+     * @returns 
+     */
     private async analyzeComponent(context: IAnalyzerContext, componentMeta: IComponentMeta, viewMeta: IViewIndexEntry) {
         var viewBuilder = new ViewBuilder(componentMeta);
         var html = await fs.readFile(viewMeta.relativeViewPath!);
 
         let element: Element;
 
-        context.addError('version2', "views");
-        var el2 = this.invokeParser(html.toString(), componentMeta.className, viewMeta.relativeViewPath!, context.addError)
+        var el2 = this.invokeParser(html.toString(), componentMeta.className, viewMeta.relativeViewPath!, (msg, cat) => context.addError(msg, cat));
         if (!el2) {
+            context.addError(`Failed to parse ${viewMeta.relativeViewPath}`, "views");
             return;
         }
         element = el2;
 
+        console.log('processing', element);
         var result = viewBuilder.process(viewMeta.viewFileName!, element);
         var classFileName = viewMeta.viewFileName?.replace('html', 'js');
         fs.writeFile(context.outputDirectory + viewMeta.relativeViewPath + classFileName, result.contents);
+        console.log('writing ', result.contents);
 
         for (let index = 0; index < result.requests.length; index++) {
             const request = result.requests[index];
@@ -227,20 +243,34 @@ export class ViewBuilderTask implements IComponentAnalyzer {
                  */
                 errorHandler: {
                     warning: function (errMsg: string) { var msg = `error: Component ${className}: ${errMsg}`; addError(msg, "views"); console.log('ERRRRRRRO ', errMsg) },
-                    error: function (errMsg: string) { var msg = `error: Component ${className}: ${errMsg}`; addError(msg, "views") },
-                    fatalError: function (errMsg: string) { var msg = `fatal: Component ${className}: ${errMsg}`; addError(msg, "views") }
+                    error: function (errMsg: string) { var msg = `error: Component ${className}: ${errMsg}`; addError(msg, "views"); console.log('ERRRRRRRO ', errMsg) },
+                    fatalError: function (errMsg: string) { var msg = `fatal: Component ${className}: ${errMsg}`; addError(msg, "views");  console.log('ERRRRRRRO ', errMsg) }
                 }
                 //only callback model
                 //errorHandler:function(level,msg){console.log(level,msg)}
             })
 
+            console.log('HTML ', `<html><body>${html.toString()}</body></html>`);
             const htmlDoc = parser.parseFromString(`<html><body>${html.toString()}</body></html>`, 'text/html');
+
+            for (let index = 0; index < htmlDoc.documentElement.childNodes.length; index++) {
+                const node = htmlDoc.documentElement.childNodes[index];
+                if (node.nodeType == node.ELEMENT_NODE){
+                    console.log('childE', (<HTMLElement>node).tagName);
+                }
+                else{
+                    console.log('childN', node.textContent);
+                }
+                
+            }
+            //console.log('element', htmlDoc.documentElement.childNodes);
             element = htmlDoc.documentElement.firstElementChild!;
             if (!element) {
-                addError(`Failed to find root element for view ${viewPath}`, "views");
+                addError(`Failed to find root element for view ${viewPath}. Found ` + htmlDoc.documentElement.outerHTML, "views");
             }
         }
         catch (e) {
+            console.log('MOOOOOOOOOOOOT', e);
             addError(`Failed to parse HTML for '${viewPath}': ${e}`, "views");
         }
 

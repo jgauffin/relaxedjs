@@ -22,7 +22,12 @@ export interface IComponentRegistration {
 
 export var registrations: IComponentRegistration[] = [];
 
-export function component(tagName: string) {
+/**
+ * Mark a class as a component (i.e. can be used in a page or another component to provide a specific UI).
+ * @param tagName Name of the HTML tag, is per default the class name.
+ * @returns 
+ */
+export function component(tagName?: string) {
   return function component<T extends Constructor>(BaseClass: T): T | void {
     var registration: IComponentRegistration = {
       componentConstructor: BaseClass,

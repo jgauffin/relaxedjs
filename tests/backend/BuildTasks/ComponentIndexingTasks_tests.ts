@@ -7,7 +7,7 @@ describe("MetaGenerator", () => {
     var dirName = "";
 
     beforeEach(() => {
-        dirName= 'indexing' + crypto.randomBytes(4).readUInt32LE(0);
+        dirName= `indexing${crypto.randomBytes(4).readUInt32LE(0)}/`;
         fs.mkdirSync(dirName);
       });
       
@@ -17,14 +17,11 @@ describe("MetaGenerator", () => {
 
     test("Should put the file in the output directory.", async () => {
         var sut = new ComponentIndexingTask();
-        var context = new AnalyzerContextStub;
+        var context = new AnalyzerContextStub();
+        context.outputDirectory = dirName;
 
-        sut.analyze(context);
+        await sut.analyze(context);
         
-        fs.stat(dirName + "componentIndex.json", function(err, stat) {
-            if (err != null) {
-              throw new Error("File was not created.");
-            }
-          });
+        fs.statSync(dirName + "componentIndex.json");
     });
 });

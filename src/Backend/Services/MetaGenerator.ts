@@ -68,7 +68,7 @@ export interface IComponentMeta {
     fileName: string;
 
     /**
-     * Directory relative to root where the file is located.
+     * Directory relative to root where the component is located.
      */
     directory: string;
 

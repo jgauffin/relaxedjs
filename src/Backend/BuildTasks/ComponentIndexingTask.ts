@@ -8,7 +8,7 @@ export class ComponentIndexingTask implements IComponentAnalyzer{
     async analyze(context: IAnalyzerContext): Promise<void> {
         
         var json = JSON.stringify(context.components);
-        await fs.writeFile('componentIndex.json', json);
+        await fs.writeFile(context.outputDirectory + 'componentIndex.json', json);
     }
 
 }
