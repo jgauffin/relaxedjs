@@ -1,4 +1,4 @@
-import { IScope2 } from "../Contexts";
+import { IViewBuilderProcessorContext } from "../Contexts";
 import { StringBuilder } from "../../Utils/StringBuilder";
 import { IElementPreProcessor, Result } from "./Index";
 
@@ -8,7 +8,7 @@ export class ForModifier implements IElementPreProcessor {
         return element.hasAttribute('for');
     }
 
-    process(element: HTMLElement, context: IScope2): Result {
+    process(element: HTMLElement, context: IViewBuilderProcessorContext): Result {
         var attrValue = element.getAttribute('for');
         if (attrValue == null) {
             return Result.NotProcessed;
@@ -44,6 +44,7 @@ export class ForModifier implements IElementPreProcessor {
         }
 
         var scope = context.createContext(element.tagName, 'parent', 'i', elementRenderMethod);
+        console.log('for context');
         context.processChildNode(element, scope);
         elementRenderMethod.dedentAppendLine('}');
 

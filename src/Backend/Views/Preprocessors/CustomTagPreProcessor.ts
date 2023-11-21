@@ -1,6 +1,6 @@
 import { registrations } from "../../../Components/Implementation/Decorator";
 import { IViewTemplateItem } from "../../../browser";
-import { IScope2 } from "../Contexts";
+import { IViewBuilderProcessorContext } from "../Contexts";
 import { IElementPreProcessor, Result } from "./Index";
 
 
@@ -16,7 +16,7 @@ export class CustomTagPreProcessor implements IElementPreProcessor {
         return registrations.findIndex(x => x.tagName == element.tagName) !== -1;
     }
 
-    process(element: HTMLElement, context: IScope2): Result {
+    process(element: HTMLElement, context: IViewBuilderProcessorContext): Result {
         console.log('Looking for ' + element.tagName);
         var reg = registrations.find(x => x.tagName!.localeCompare(element.tagName, 'en', { sensitivity: "accent" }) == 0);
         if (!reg) {

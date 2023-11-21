@@ -1,4 +1,4 @@
-import { IScope2 } from "../Contexts";
+import { IViewBuilderProcessorContext } from "../Contexts";
 import { ITextNodeProcessor } from "./Index";
 
 export class HandleBarsInvoker implements ITextNodeProcessor {
@@ -6,7 +6,7 @@ export class HandleBarsInvoker implements ITextNodeProcessor {
         return node.textContent != null && node.textContent.indexOf('{{') >= 0;
     }
 
-    process(node: Node, context: IScope2): boolean {
+    process(node: Node, context: IViewBuilderProcessorContext): boolean {
         if (!node.textContent || node.textContent.indexOf('{{') === -1) {
             return false;
         }

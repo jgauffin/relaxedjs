@@ -18,7 +18,7 @@ describe("ViewBuilderTask", () => {
     });
 
     afterEach(() => {
-       //fs.rmSync(dirName, { recursive: true, force: true });
+       fs.rmSync(dirName, { recursive: true, force: true });
     });
 
 

@@ -9,10 +9,10 @@ export interface IPreRun {
 }
 
 
-export type ProcessChildNodeCallback = (node: Node, context: IScope2, createNewScope?: boolean) => void;
+export type ProcessChildNodeCallback = (node: Node, context: IViewBuilderProcessorContext, createNewScope?: boolean) => void;
 
 
-export interface IScope2 {
+export interface IViewBuilderProcessorContext {
 
     /**
      * Queue a view generation for a templated child view.
@@ -65,8 +65,8 @@ export interface IScope2 {
      */
     viewResult: IGeneratedViewClass
 
-    processChildNode(node: Node, scope?: IScope2): void;
-    createContext(tagName: string, variableName?: string, parentVariableName?: string, methodBuilder?: StringBuilder, newIndex?: boolean): IScope2;
+    processChildNode(node: Node, scope?: IViewBuilderProcessorContext): void;
+    createContext(tagName: string, variableName?: string, parentVariableName?: string, methodBuilder?: StringBuilder, newIndex?: boolean): IViewBuilderProcessorContext;
     toDebug(): string;
 }
 
@@ -76,7 +76,7 @@ export interface IRequestedViewBuild {
     childViewPath: string
 }
 
-export class Scope2 implements IScope2 {
+export class Scope2 implements IViewBuilderProcessorContext {
     private _variableName?: string;
 
     constructor(private tagName: string, private callback: ProcessChildNodeCallback, public viewResult: IGeneratedViewClass, private tagIndexes: Map<string, number>, public parentVariableName: string, variableName?: string, methodBuilder?: StringBuilder) {
@@ -103,7 +103,7 @@ export class Scope2 implements IScope2 {
         });
     }
 
-    createContext(tagName: string, variableName?: string | undefined, parentVariableName?: string | undefined, methodBuilder?: StringBuilder | undefined): IScope2 {
+    createContext(tagName: string, variableName?: string | undefined, parentVariableName?: string | undefined, methodBuilder?: StringBuilder | undefined): IViewBuilderProcessorContext {
         if (!parentVariableName) {
             parentVariableName = this._variableName ?? this.parentVariableName;
         }
@@ -143,7 +143,7 @@ export class Scope2 implements IScope2 {
         return this._variableName;
     }
 
-    processChildNode(node: Node, scope?: IScope2): void {
+    processChildNode(node: Node, scope?: IViewBuilderProcessorContext): void {
         // console.log('ddd', scope);
         // console.log('parentScope', this);
         // var c =scope ?? this.createContext();

@@ -1,4 +1,4 @@
-import { IScope2 } from "../Contexts";
+import { IViewBuilderProcessorContext } from "../Contexts";
 
 export enum Result{
 
@@ -20,6 +20,6 @@ export enum Result{
 }
 export interface IElementPreProcessor {
     analyze(element: HTMLElement): boolean;
-    process(element: HTMLElement, context: IScope2): Result;
+    process(element: HTMLElement, context: IViewBuilderProcessorContext): Result;
 }
 

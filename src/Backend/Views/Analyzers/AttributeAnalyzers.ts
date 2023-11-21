@@ -1,11 +1,11 @@
-import { IScope2 } from "../Contexts";
+import { IViewBuilderProcessorContext } from "../Contexts";
 import { IElementProcessor } from "./Index";
 
 export class LinkProcessor implements IElementProcessor{
     analyze(element: HTMLElement): boolean {
         return false;
     }
-    process(element: HTMLElement, context: IScope2): void {
+    process(element: HTMLElement, context: IViewBuilderProcessorContext): void {
         if (element.tagName != 'A'){
             return;
         }
@@ -46,7 +46,7 @@ export class AttributePrefixModifier implements IElementProcessor {
         return false;
     }
 
-    process(element: HTMLElement, context: IScope2) {
+    process(element: HTMLElement, context: IViewBuilderProcessorContext) {
         var methodBuilder = context.methodBuilder;
         let attributesToRemove: string[] = [];
         for (let index = 0; index < element.attributes.length; index++) {
@@ -92,7 +92,7 @@ export class ButtonEventAnalyzer implements IElementProcessor {
         return false;
     }
 
-    process(element: HTMLElement, context: IScope2): void {
+    process(element: HTMLElement, context: IViewBuilderProcessorContext): void {
         const typeAttribute = element.getAttribute('type');
         const nameAttribute = element.getAttribute('name');
 
@@ -137,7 +137,7 @@ export class ButtonEventAnalyzer implements IElementProcessor {
 
     }
 
-    bindEvent(context: IScope2, eventName: string, functionName: string){
+    bindEvent(context: IViewBuilderProcessorContext, eventName: string, functionName: string){
         var a = <any>context.viewResult.component.functions;
         if (!a.hasOwnProperty(functionName)){
             throw new Error(`Component does not have specified function. Can't bind event '${eventName}' to '${functionName}'.`)

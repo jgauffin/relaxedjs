@@ -250,23 +250,12 @@ export class ViewBuilderTask implements IComponentAnalyzer {
                 //errorHandler:function(level,msg){console.log(level,msg)}
             })
 
-            console.log('HTML ', `<html><body>${html.toString()}</body></html>`);
             const htmlDoc = parser.parseFromString(`<html><body>${html.toString()}</body></html>`, 'text/html');
 
-            for (let index = 0; index < htmlDoc.documentElement.childNodes.length; index++) {
-                const node = htmlDoc.documentElement.childNodes[index];
-                if (node.nodeType == node.ELEMENT_NODE){
-                    console.log('childE', (<HTMLElement>node).tagName);
-                }
-                else{
-                    console.log('childN', node.textContent);
-                }
-                
-            }
-            //console.log('element', htmlDoc.documentElement.childNodes);
-            element = htmlDoc.documentElement.firstElementChild!;
+            // ugly, yes. But it's the only combination that I could get to work.
+            element = <HTMLElement>htmlDoc.documentElement.firstChild!.firstChild!;
             if (!element) {
-                addError(`Failed to find root element for view ${viewPath}. Found ` + htmlDoc.documentElement.outerHTML, "views");
+                addError(`Failed to find root element for view ${viewPath}. Found ` + htmlDoc.body.outerHTML, "views");
             }
         }
         catch (e) {
@@ -277,4 +266,19 @@ export class ViewBuilderTask implements IComponentAnalyzer {
         return element;
 
     }
+
+    // private asNode(node: Node | null): string{
+
+    //     if (!node){
+    //         return 'NULL';
+    //     }
+
+    //     var str = node.nodeName + '## VALUE';
+    //     if (node.nodeType == Node.ELEMENT_NODE){
+    //         return str += (<HTMLElement>node);
+    //     }
+    //     else{
+    //         return str += 'TEXT ' + node.textContent ?? "";
+    //     }
+    // }
 }

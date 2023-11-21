@@ -1,4 +1,4 @@
-import { IScope2 } from "../Contexts";
+import { IViewBuilderProcessorContext } from "../Contexts";
 import { IElementProcessor } from "./Index";
 
 
@@ -10,7 +10,7 @@ export class FormSubmitAnalyzer implements IElementProcessor {
     analyze(element: HTMLElement): boolean {
         return false;
     }
-    process(element: HTMLElement, context: IScope2): void {
+    process(element: HTMLElement, context: IViewBuilderProcessorContext): void {
 
         if (element.tagName != 'FORM') {
             return;
@@ -39,7 +39,7 @@ export class FormSubmitAnalyzer implements IElementProcessor {
         this.bindEvent(context, eventName, functionName);
     }
 
-    bindEvent(context: IScope2, eventName: string, functionName: string) {
+    bindEvent(context: IViewBuilderProcessorContext, eventName: string, functionName: string) {
         var method = <any>context.viewResult.component.findMethod(functionName);
         if (!method) {
             throw new Error(`Component '${context.viewResult.component.className}' does not have requested function. Can't bind event '${eventName}' to function '${functionName}'.`)
