@@ -1,45 +1,37 @@
 import { IViewBuilderProcessorContext } from "../Contexts";
 import { IElementProcessor } from "./Index";
 
-export class LinkProcessor implements IElementProcessor{
+export class LinkProcessor implements IElementProcessor {
     analyze(element: HTMLElement): boolean {
-        return false;
+        return element.tagName === 'A';
     }
     process(element: HTMLElement, context: IViewBuilderProcessorContext): void {
-        if (element.tagName != 'A'){
-            return;
-        }
-
-        if (!element.getAttribute("href")){
+        if (!element.getAttribute("href")) {
             element.setAttribute("href", "#");
         }
 
         var name = element.getAttribute("name");
-        var method=context.viewResult.component.findMethod(name ?? "noop");
-        if (method){
-            element.addEventListener('click', e=> {
-                
-            })
+        var method = context.viewResult.component.findMethod(name ?? "noop");
+        if (!method) {
+            context.logger.warning("Binding", context.viewPath, `Component does not have specified function. Can't bind event 'click' to '${name}'.`);
+            return;
+        }
+
+        if (method) {
+            context.methodBuilder.appendLine(`this.bindActions.push(() => ${context.variableName}.addEventListener('click', e => context.component['${name}'](e), { signal: this.controller.signal }));`);
         }
     }
 }
 
+///
 export class AttributePrefixModifier implements IElementProcessor {
 
-    analyze(element: HTMLElement): boolean{
+    analyze(element: HTMLElement): boolean {
         for (let index = 0; index < element.attributes.length; index++) {
             const attribute = element.attributes[index];
 
-            // format value as number.
-            if (attribute.name[0] == '+') {
+            if (attribute.value.match(/[\+:][a-zA-Z_\-0-9]/)) {
                 return true;
-            } else if (attribute.name[0] == ':') {
-                return true;
-            }
-            else if (attribute.value.match(/[\+:][a-zA-Z_\-0-9]/)) {
-                return true;
-            }else{
-                continue;
             }
         }
 
@@ -58,14 +50,14 @@ export class AttributePrefixModifier implements IElementProcessor {
                 console.log('+' + attribute.name);
                 attributesToRemove.push(attribute.name);
                 //methodBuilder.appendLine(`if (context.data.${attribute.name.substring(1)}) {`);
-                methodBuilder.appendLine(`${context.variableName}.setAttribute("${attribute.name.substring(1)}", +context.data.${attribute.value});`);
+                methodBuilder.appendLine(`${context.variableName}.setAttribute("${attribute.name.substring(1)}", context.data.${attribute.value});`);
                 //methodBuilder.appendLine('}');
             } else if (attribute.name[0] == ':') {
                 console.log(':' + attribute.name);
                 attributesToRemove.push(attribute.name);
-                methodBuilder.appendLine(`${context.variableName}.setAttribute("${attribute.name.substring(1)}", +context.data.${attribute.value});`);
+                methodBuilder.appendLine(`${context.variableName}.setAttribute("${attribute.name.substring(1)}", context.data.${attribute.value});`);
             }
-            else if (attribute.value.match(/[\+:][a-zA-Z_\-0-9]/)) {
+            else if (attribute.value.match(/[\+:][a-zA-Z_\-0-9]+/)) {
                 console.log('splt' + attribute.name);
                 //TODO: split between them
             }
@@ -88,7 +80,7 @@ export class AttributePrefixModifier implements IElementProcessor {
  */
 export class ButtonEventAnalyzer implements IElementProcessor {
 
-    analyze(element: HTMLElement): boolean{
+    analyze(element: HTMLElement): boolean {
         return false;
     }
 
@@ -137,11 +129,11 @@ export class ButtonEventAnalyzer implements IElementProcessor {
 
     }
 
-    bindEvent(context: IViewBuilderProcessorContext, eventName: string, functionName: string){
+    bindEvent(context: IViewBuilderProcessorContext, eventName: string, functionName: string) {
         var a = <any>context.viewResult.component.functions;
-        if (!a.hasOwnProperty(functionName)){
+        if (!a.hasOwnProperty(functionName)) {
             throw new Error(`Component does not have specified function. Can't bind event '${eventName}' to '${functionName}'.`)
-            
+
         }
 
         context.methodBuilder.appendLine(`this.bindActions.push(() => ${context.variableName}.addEventListener('${eventName}', e => context.component['${functionName}'](e), { signal: this.controller.signal }));`);
