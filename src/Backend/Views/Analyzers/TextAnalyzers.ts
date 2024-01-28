@@ -1,6 +1,11 @@
 import { IViewBuilderProcessorContext } from "../Contexts";
 import { ITextNodeProcessor } from "./Index";
 
+/**
+ * Processes text nodes in HTML and looks for one or more handlebar codes in it {{user.name}}.
+ * 
+ * If more than one tag is found in the same text node, it's changed to a template string.
+ */
 export class HandleBarsInvoker implements ITextNodeProcessor {
     analyze(node: Node): boolean {
         return node.textContent != null && node.textContent.indexOf('{{') >= 0;
@@ -16,7 +21,7 @@ export class HandleBarsInvoker implements ITextNodeProcessor {
 
         let str = '';
         if (matches.length == 3 && matches[0] == '' && matches[2] == '') {
-            str = matches[1];
+            str = `context.data.${matches[1]}`;
         }
         else {
             str = "`";
@@ -34,7 +39,7 @@ export class HandleBarsInvoker implements ITextNodeProcessor {
         if (node.parentElement?.childNodes.length == 1) {
             context.methodBuilder.appendLine(`${context.variableName}.innerText = ${str};`);
         } else {
-            context.methodBuilder.appendLine(`this.text(${context.variableName}, ${str});`);
+            context.methodBuilder.appendLine(`${context.variableName}.text(${str});`);
         }
 
         return true;

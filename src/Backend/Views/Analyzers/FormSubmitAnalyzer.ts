@@ -3,35 +3,26 @@ import { IElementProcessor } from "./Index";
 
 
 /**
- * Looks for all attributes prefixed with 
+ * USed to
  */
 export class FormSubmitAnalyzer implements IElementProcessor {
 
     analyze(element: HTMLElement): boolean {
-        return false;
+        return element.tagName == 'FORM';
     }
     process(element: HTMLElement, context: IViewBuilderProcessorContext): void {
-
-        if (element.tagName != 'FORM') {
-            return;
-        }
-
         const clickAttribute = element.getAttribute('click');
         const nameAttribute = element.getAttribute('name');
 
         var functionName = '';
         var eventName = '';
-        if (clickAttribute) {
-            functionName = 'on' + clickAttribute?.substring(0, 1).toUpperCase() + clickAttribute.substring(1);
-            eventName = 'click';
-        }
-
-        else if (nameAttribute) {
+        if (nameAttribute) {
             functionName = 'on' + nameAttribute?.substring(0, 1).toUpperCase() + nameAttribute.substring(1);
             eventName = 'submit';
-        }
-
-        else {
+        } else if (clickAttribute) {
+            functionName = 'on' + clickAttribute?.substring(0, 1).toUpperCase() + clickAttribute.substring(1);
+            eventName = 'click';
+        } else {
             functionName = 'onSubmit';
             eventName = 'submit';
         }

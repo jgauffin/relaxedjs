@@ -4,7 +4,7 @@ import { FakeComponentMeta } from "../../Stubs/FakeComponentMeta";
 import { ViewStubBuilder } from "../../Stubs/ViewBuilderProcessorContextStub";
 
 
-describe("AttributeAnalyzer", () => {
+describe("LinkProcessor", () => {
     var meta = new FakeComponentMeta();
     var contextBuilder = new ViewStubBuilder();
     contextBuilder.componentMeta = meta;

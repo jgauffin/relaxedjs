@@ -19,8 +19,13 @@ export class IfAttribute implements IElementPreProcessor {
 
         element.removeAttribute('if');
 
-        context.methodBuilder.appendLineIndent(`if (context.data.${attrValue}) {`);
-        console.log('if context ' + element.outerHTML);
+        // interpret parenthis as method.
+        if (attrValue.indexOf('(') !== -1){
+            context.methodBuilder.appendLineIndent(`if (context.vm.${attrValue}) {`);    
+        }else{
+            context.methodBuilder.appendLineIndent(`if (context.data.${attrValue}) {`);
+        }
+
         context.processChildNode(element);
         context.methodBuilder.dedentAppendLine('}');
         return Result.StopProcessing;

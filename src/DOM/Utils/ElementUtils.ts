@@ -75,13 +75,30 @@ export class ElementUtils {
      * Type is specified when attributes are bound using prefixes.
      * 
      * @param e Element to get type for
+     * @param attributeName Specified when it's the attribute itself that should get 
      * @returns 
      */
-    getDataType(e: HTMLElement): string | null {
+    getDataType(e: HTMLElement, attributeName?: string): string | null {
         if (this.isFormField(e)) {
             return e.getAttribute("type");
         } else {
             return e.getAttribute('data-type');
         }
     }
+
+        /**
+     * Get data type (type attribute on input fields and 'data-type' for all others).
+     * 
+     * Type is specified when attributes are bound using prefixes.
+     * 
+     * @param e Element to get type for
+     * @returns 
+     */
+        setDataType(e: HTMLElement, typeName: string): void {
+            if (this.isFormField(e)) {
+                e.setAttribute("type", typeName);
+            } else {
+                e.setAttribute('data-type', typeName);
+            }
+        }
 }
