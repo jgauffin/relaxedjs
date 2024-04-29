@@ -1,5 +1,5 @@
 import { PropertyChangeSubscription, SubscriptionService, PropertyChangeReceiver, Subscription, EventHandler } from "./Notifications";
-import { GotParent, ProxyValueHandler, isProxy } from "./ProxyTools";
+import { GotParent, ProxyValueHandler, isValueProxy } from "./ProxyTools";
 
 enum ListNotificationType {
     Added,
@@ -40,7 +40,7 @@ export class ObservableList<T> implements Subscription<ListNotificationReciever<
         // and not by accessing them through the array.
         for (let index = 0; index < items.length; index++) {
             let element = <any>items[index];
-            if (!element[isProxy]){
+            if (!element[isValueProxy]){
                 items[index] = createProxy()
             }
         }
@@ -54,7 +54,7 @@ export class ObservableList<T> implements Subscription<ListNotificationReciever<
     }
 
     get(index: number): T{
-        if (!this.inner[isProxy]){
+        if (!this.inner[isValueProxy]){
 
         }
     }

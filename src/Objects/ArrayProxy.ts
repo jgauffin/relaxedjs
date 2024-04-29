@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { SubscriptionService, Subscription, EventHandler } from "./Notifications";
-import { createProxy } from "./ProxyFactory";
-import { isProxy, isProxySymbol } from "./ProxyTools";
+import { isProxySymbol } from "./ProxyTools";
 
 export enum ListNotificationType {
     Added,
@@ -22,17 +22,6 @@ export interface ListNotification<T> {
      * Item that was added/modified/removed.
      */
     items: T[];
-};
-
-export interface ListElementNotification<T>{
-    index: number;
-
-    /**
-     * Key when the operation is indexed.
-     */
-    key?: symbol | string
-
-    element: T;
 }
 
 const ourMethods =  ['pop', 'push', 'shift', 'unshift'];
@@ -44,35 +33,32 @@ export function isArrayProxy(obj: any): boolean{
 }
 
 export interface IArrayProxy{
-    arrayChanges: Subscription<ListNotification<any>>;
-    elementChanges: Subscription<ListElementNotification<any>>;
+    arrayChanges: Subscription<ListNotification<unknown>>;
 }
 
-export class ArrayProxyHandler implements ProxyHandler<Array<any>>, IArrayProxy {
-    private subscribers: SubscriptionService<ListNotification<any>>;
+export class ArrayProxyHandler implements ProxyHandler<Array<unknown>>, IArrayProxy {
+    private subscribers: SubscriptionService<ListNotification<unknown>>;
 
-    constructor(parentNotifier?: () => void) {
-        this.subscribers = new SubscriptionService<ListNotification<any>>();
-        this.subscribers.parentNotifier = parentNotifier;
+    constructor() {
+        this.subscribers = new SubscriptionService<ListNotification<unknown>>();
     }
 
-    arrayChanges: Subscription<ListNotification<any>> = new SubscriptionService<ListNotification<any>>;
-    elementChanges: Subscription<ListElementNotification<any>> = new SubscriptionService<ListElementNotification<any>>;;
+    arrayChanges: Subscription<ListNotification<unknown>> = new SubscriptionService<ListNotification<unknown>>;
 
-    subscribe(receiver: EventHandler<ListNotification<any>>): void {
+    subscribe(receiver: EventHandler<ListNotification<unknown>>): void {
         this.subscribers.subscribe(receiver);
     }
-    unsubscribe(receiver: EventHandler<ListNotification<any>>): void {
+    unsubscribe(receiver: EventHandler<ListNotification<unknown>>): void {
         this.subscribers.unsubscribe(receiver);
     }
 
 
-    deleteProperty?(_target: any[], _p: string | symbol): boolean {
+    deleteProperty?(_target: unknown[], _p: string | symbol): boolean {
         console.log('delete property ', _p);
         return true;
     }
 
-    get(target: any, key: string | symbol, _receiver: any) {
+    get(target: any, key: string | symbol): any {
         if (key == isProxySymbol) {
             return true;
         }
@@ -80,7 +66,7 @@ export class ArrayProxyHandler implements ProxyHandler<Array<any>>, IArrayProxy 
             return true;
         }
 
-        var keyAsStr = key.toString();
+        const keyAsStr = key.toString();
 
         const value = target[key];
 
@@ -89,21 +75,22 @@ export class ArrayProxyHandler implements ProxyHandler<Array<any>>, IArrayProxy 
                 return value.bind(target);
             }
 
-            var self = this;
-            var elements = Array.from(arguments);
-            this.wrapInProxies(target, elements);
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            const self = this;
+            // eslint-disable-next-line prefer-rest-params
+            const elements = Array.from(arguments);
 
             if (keyAsStr == 'pop') {
                 return function () {
                     const index = target.length - 1;
-                    var result = Array.prototype[<any>keyAsStr].apply(target, elements);
+                    const result = Array.prototype[<any>keyAsStr].apply(target, elements);
                     self.subscribers.notify(target, { index, notificationType: ListNotificationType.Removed, items: elements })
                     return result;
                 }
             }
             if (keyAsStr == 'push') {
                 return function () {
-                    var result = Array.prototype[<any>keyAsStr].apply(target, elements);
+                    const result = Array.prototype[<any>keyAsStr].apply(target, elements);
                     const index = target.length - 1;
                     self.subscribers.notify(target, { index, notificationType: ListNotificationType.Added, items: elements })
                     return result;
@@ -111,14 +98,14 @@ export class ArrayProxyHandler implements ProxyHandler<Array<any>>, IArrayProxy 
             }
             if (keyAsStr == 'shift') {
                 return function () {
-                    var result = Array.prototype[<any>keyAsStr].apply(target, elements);
+                    const result = Array.prototype[<any>keyAsStr].apply(target, elements);
                     self.subscribers.notify(target, { index: 0, notificationType: ListNotificationType.Removed, items: elements })
                     return result;
                 }
             }
             if (keyAsStr == 'unshift') {
                 return function () {
-                    var result = Array.prototype[<any>keyAsStr].apply(target, elements);
+                    const result = Array.prototype[<any>keyAsStr].apply(target, elements);
                     self.subscribers.notify(target, { index: 0, notificationType: ListNotificationType.Added, items: elements })
                     return result;
                 }
@@ -138,20 +125,12 @@ export class ArrayProxyHandler implements ProxyHandler<Array<any>>, IArrayProxy 
         return value;
     }
 
-    private wrapInProxies(parent: any, elements: any[]) {
-        for (let index = 0; index < elements.length; index++) {
-            const element = elements[index];
-            if (!isProxy(element)) {
-                elements[index] = createProxy(element, {parent, path: index.toString()})
-            }
-        }
-    }
-
-    set(target: any, key: string | symbol, newValue: any, _receiver: any): boolean {
+    set(target: any, key: string | symbol, newValue: unknown): boolean {
         target[key] = newValue;
 
-        var index = parseInt(key.toString(), 10);
+        const index = parseInt(key.toString(), 10);
         if (!isNaN(index)) {
+            // eslint-disable-next-line prefer-rest-params
             this.subscribers.notify(target, { index: index, notificationType: ListNotificationType.Removed, items: Array.from(arguments) })
         }
 
@@ -159,3 +138,19 @@ export class ArrayProxyHandler implements ProxyHandler<Array<any>>, IArrayProxy 
     }
 
 }
+
+/*
+    private wrapInProxies(parent: any, elements: any[]) {
+        for (let index = 0; index < elements.length; index++) {
+            const element = elements[index];
+            if (!isProxy(element)) {
+                elements[index] = createProxy(element, {parent, path: index.toString()})
+            }
+
+            var e2 = elements[index];
+            if (!isArrayProxy(e2)){
+                e2.
+            }
+        }
+    }
+*/

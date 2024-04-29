@@ -1,6 +1,5 @@
-import { PropertyChangeSubscription, SubscriptionService, PropertyChangeReceiver } from "./Notifications";
-import { GotParent, isProxy, ProxyValueHandler } from "./ProxyTools";
-
+import { PropertyChangeSubscription, SubscriptionService, PropertyChangeReceiver, PropertyChangedData, Subscription } from "./Notifications";
+import { createProxyCallback, isValueProxy, ProxyValueHandler } from "./ProxyTools";
 
 
 
@@ -9,41 +8,60 @@ import { GotParent, isProxy, ProxyValueHandler } from "./ProxyTools";
  * 
  * 
  */
-export class DataProxyHandler implements ProxyHandler<any>, PropertyChangeSubscription, GotParent {
-    private subscribers = new SubscriptionService();
-    private valueHandler: ProxyValueHandler;
+export class DataProxyHandler implements ProxyHandler<any>, PropertyChangeSubscription {
+    private subscribers = new SubscriptionService<PropertyChangedData>();
 
-    constructor(path: string, parentNotifier?: () => void, protected someCoolInstance?: any) {
-        this.subscribers.parentNotifier = parentNotifier;
-        this.valueHandler = new ProxyValueHandler(this, path);
+    constructor(private path: string, private proxyFactory: createProxyCallback) {
     }
 
-    subscribe(receiver: PropertyChangeReceiver): void {
-        this.subscribers.subscribe(receiver);
-    }
-    unsubscribe(receiver: PropertyChangeReceiver): void {
-        this.subscribers.unsubscribe(receiver);
+
+
+    get subscription(): Subscription<PropertyChangedData>
+    {
+        return this.subscribers;
     }
 
-    set parent(value: GotParent | undefined) {
-        this.subscribers.parentNotifier = value;
-    }
 
     get(target: any, key: string | symbol): any {
         return this.valueHandler.get(target, key);
     }
 
     set(target: any, key: string | symbol, newValue: any, _receiver: any): boolean {
-
-        var changed = this.valueHandler.set(target, key, newValue);
-        if (changed) {
-            this.subscribers.notify(target, key.toString());
+        const oldValue = target[key];
+        if (oldValue === newValue) {
+            return false;
         }
 
-        return changed;
+        if (isValueProxy(oldValue)) {
+            console.log(`removing old child`);
+            oldValue.unsubscribe(this);
+        }
+
+        if (typeof newValue === 'object') {
+            if (isValueProxy(newValue)) {
+                console.log(`value is already a new proxy, old parent: ${newValue.parentNotifier}`);
+            } else{
+                newValue = this.proxyFactory({
+                    instance: newValue,
+                    path: `${this.path}.${key.toString()}`,
+                    parent: target,
+                });
+            }
+
+            newValue.subscribe(this, (source: Record<string|unknown>,e:) => {
+                this.subscribers.notify()
+            })
+            this.onChildChange(target, key);
+
+        } else {
+            // dont create a proxy for symbol/function types.
+            target[key] = newValue;
+        }
+
+        return true;
     }
 
-    deleteProperty(target: any, key: string | symbol): boolean {
+    deleteProperty(target: Record<string, unknown>, key: string | symbol): boolean {
         console.log('deleteProperty', target, key);
         return this.valueHandler.delete(target, key);
     }
@@ -66,10 +84,10 @@ export class DataProxyHandler implements ProxyHandler<any>, PropertyChangeSubscr
         return target;
     }
 
-    getOwnPropertyDescriptor(target: any, key: string | symbol) {
+    getOwnPropertyDescriptor(target: any, key: string | symbol): PropertyDescriptor|undefined {
         console.log('getOwnPropertyDescriptor', target, key);
         let value = target[key];
-        if (value[isProxy]) {
+        if (isValueProxy(value)) {
             console.log('is proxy!')
             value = value.someCoolInstance;
         }

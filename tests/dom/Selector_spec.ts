@@ -25,6 +25,7 @@ describe("FormReader", () => {
         </body>`;
         var elem = document.createElement("html");
         elem.innerHTML = html;
+        
 
         var sut = new Selector(elem);
         var actual = sut.one('$name')
